@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String
+  image     String?
+  role      Role       @default(MAHASISWA)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  peminjaman    Peminjaman[]
+  penelitian    Penelitian[]
+  identifikasi  Identifikasi[]
+  kerjaLembur   KerjaLembur[]
+  readWatchCreated ReadWatch[] @relation("ReadWatchCreatedBy")
+  readWatchUpdated ReadWatch[] @relation("ReadWatchUpdatedBy")
+  
+  @@index([email])
+}
+
+enum Role {
+  ADMIN
+  ASISTEN
+  MAHASISWA
+}
+
+model ReadWatch {
+  id          String   @id @default(cuid())
+  createdById String?
+  updatedById String?
+  title       String
+  description String?  @db.Text
+  category    String
+  content     String?  @db.LongText
+  fileUrl     String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy   User?    @relation("ReadWatchCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy   User?    @relation("ReadWatchUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([category])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+model Peminjaman {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  toolName        String
+  quantity        Int
+  borrowDate      DateTime
+  returnDate      DateTime?
+  expectedReturn  DateTime
+  email           String?
+  tahunMasuk      Int?
+  nama            String?
+  nim             String?
+  institusi       String?
+  noWa            String?
+  dosenPembimbing String?
+  persetujuanPembimbing String? // TELAH_DISETUJUI, BELUM
+  judulPenelitian String?
+  tujuanPenelitian String? @db.Text
+  fasilitasDigunakan String? @db.Text
+  waktuMulaiPenggunaan DateTime?
+  waktuSelesaiPengembalian DateTime?
+  dokumenPermohonanUrl String?
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, RETURNED
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Penelitian {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  description     String?  @db.Text
+  startDate       DateTime
+  endDate         DateTime?
+  email           String?
+  nama            String?
+  nim             String?
+  namaInstitusi   String?
+  noWa            String?
+  namaDosenPembimbing String?
+  jadwalPelaksanaan String? @db.Text
+  suratPermohonanUrl String?
+  status          String   @default("PENDING") // PENDING, APPROVED, ONGOING, COMPLETED
+  documentUrl     String?
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Identifikasi {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plantName       String
+  scientificName  String?
+  description     String?  @db.Text
+  imageUrl        String?
+  email           String?
+  nama            String?
+  nim             String?
+  namaInstitusi   String?
+  noWa            String?
+  namaDosenPembimbing String?
+  jadwalPelaksanaan String? @db.Text
+  suratPermohonanUrl String?
+  namaKode        String?
+  familyKelompok  String?
+  status          String   @default("PENDING") // PENDING, VERIFIED, REJECTED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model KerjaLembur {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime
+  hours           Int
+  description     String?  @db.Text
+  email           String?
+  nama            String?
+  nim             String?
+  namaInstitusi   String?
+  noWa            String?
+  namaDosenPembimbing String?
+  jadwalPelaksanaanLembur String? @db.Text
+  suratPermohonanUrl String?
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}

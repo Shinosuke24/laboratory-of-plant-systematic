@@ -1,0 +1,15 @@
+-- AlterTable
+ALTER TABLE `Peminjaman` ADD COLUMN `dokumenPermohonanUrl` VARCHAR(191) NULL,
+    ADD COLUMN `dosenPembimbing` VARCHAR(191) NULL,
+    ADD COLUMN `email` VARCHAR(191) NULL,
+    ADD COLUMN `fasilitasDigunakan` TEXT NULL,
+    ADD COLUMN `institusi` VARCHAR(191) NULL,
+    ADD COLUMN `judulPenelitian` VARCHAR(191) NULL,
+    ADD COLUMN `nama` VARCHAR(191) NULL,
+    ADD COLUMN `nim` VARCHAR(191) NULL,
+    ADD COLUMN `noWa` VARCHAR(191) NULL,
+    ADD COLUMN `persetujuanPembimbing` VARCHAR(191) NULL,
+    ADD COLUMN `tahunMasuk` INTEGER NULL,
+    ADD COLUMN `tujuanPenelitian` TEXT NULL,
+    ADD COLUMN `waktuMulaiPenggunaan` DATETIME(3) NULL,
+    ADD COLUMN `waktuSelesaiPengembalian` DATETIME(3) NULL;

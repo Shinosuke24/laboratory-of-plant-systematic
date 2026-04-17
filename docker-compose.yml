@@ -1,0 +1,51 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: plant_lab_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: plant_lab
+      MYSQL_USER: plant_user
+      MYSQL_PASSWORD: plant_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  app:
+    build: .
+    container_name: plant_lab_app
+    restart: always
+    env_file: .env.local
+    volumes:
+      - ./public/uploads:/app/public/uploads
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NEXTAUTH_URL: "http://localhost:3000"
+      NODE_ENV: "production"
+
+  prisma-studio:
+    build: .
+    container_name: plant_lab_prisma
+    env_file: .env.local
+    ports:
+      - "5555:5555"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: npm exec prisma studio -- --port 5555 --hostname 0.0.0.0 --browser none
+    environment:
+      NEXTAUTH_URL: "http://localhost:3000"
+      NODE_ENV: "development"
+
+volumes:
+  mysql_data:
