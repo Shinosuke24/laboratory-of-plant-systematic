@@ -18,46 +18,66 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
-      // First login
-      if (user) {
-        let dbUser = await prisma.user.findUnique({
-          where: { email: user.email! },
-        });
-
-        // Create user if it does not exist yet
-        if (!dbUser) {
-          dbUser = await prisma.user.create({
-            data: {
-              email: user.email!,
-              name: user.name || "No Name",
-            },
+    async signIn({ user, account }) {
+      try {
+        console.log("[auth] signIn callback:", { email: user.email, provider: account?.provider });
+        
+        // PrismaAdapter will handle Account creation, but we ensure User exists
+        if (user.email) {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email },
           });
+
+          if (!existingUser) {
+            console.log("[auth] Creating new user:", user.email);
+            await prisma.user.create({
+              data: {
+                email: user.email,
+                name: user.name || "No Name",
+                image: user.image,
+              },
+            });
+          }
+        }
+        return true;
+      } catch (error) {
+        console.error("[auth] signIn error:", error);
+        return false;
+      }
+    },
+
+    async jwt({ token, user, account }) {
+      try {
+        if (user) {
+          token.id = user.id;
+          token.email = user.email;
         }
 
-        token.id = dbUser.id;
-        token.role = dbUser.role;
-      }
+        if (token.email) {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email },
+            select: { id: true, role: true, email: true },
+          });
 
-      // Refresh role on each request
-      if (token.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: token.email },
-        });
-
-        if (dbUser) {
-          token.role = dbUser.role;
-          token.id = dbUser.id;
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.role = dbUser.role;
+          }
         }
+      } catch (error) {
+        console.error("[auth] jwt callback error:", error);
       }
-
       return token;
     },
 
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
+      try {
+        if (session.user) {
+          session.user.id = token.id as string;
+          session.user.role = token.role as string;
+        }
+      } catch (error) {
+        console.error("[auth] session callback error:", error);
       }
       return session;
     },
@@ -65,11 +85,19 @@ export const authOptions: NextAuthOptions = {
 
   pages: {
     signIn: "/signin",
+    error: "/signin",
   },
 
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+
+  jwt: {
+    secret: process.env.NEXTAUTH_SECRET,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
   secret: process.env.NEXTAUTH_SECRET,
+  debug: true,
 };
