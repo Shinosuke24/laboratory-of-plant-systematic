@@ -2,68 +2,81 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
-  const session = token ? { user: token } : null;
-  const path = request.nextUrl.pathname;
+  try {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET || "",
+      secureCookie: process.env.NODE_ENV === "production",
+    });
 
-  // Public routes that don't need authentication
-  const publicRoutes = ["/", "/signin", "/about", "/people", "/read-watch"];
-  const isPublicRoute = publicRoutes.some((route) =>
-    route === "/"
-      ? path === "/"
-      : path === route || path.startsWith(`${route}/`),
-  );
+    const session = token ? { user: token } : null;
+    const path = request.nextUrl.pathname;
 
-  // Admin-only routes
-  const adminRoutes = ["/admin"];
+    console.log("[middleware] Token:", token ? "exists" : "missing");
+    console.log("[middleware] Path:", path);
+    console.log("[middleware] SECRET exists:", !!process.env.NEXTAUTH_SECRET);
 
-  // Asisten-only routes
-  const asistenRoutes = ["/asisten"];
+    // Public routes that don't need authentication
+    const publicRoutes = ["/", "/signin", "/about", "/people", "/read-watch"];
+    const isPublicRoute = publicRoutes.some((route) =>
+      route === "/"
+        ? path === "/"
+        : path === route || path.startsWith(`${route}/`),
+    );
 
-  // Read & Watch management is strictly for ASISTEN
-  const asistenStrictRoutes = ["/asisten/read-watch"];
+    // Admin-only routes
+    const adminRoutes = ["/admin"];
 
-  // If user is not authenticated and trying to access protected route
-  if (!session && !isPublicRoute) {
-    return NextResponse.redirect(new URL("/signin", request.url));
-  }
+    // Asisten-only routes
+    const asistenRoutes = ["/asisten"];
 
-  // If user is authenticated and trying to access signin, redirect to dashboard
-  if (session && path === "/signin") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
+    // Read & Watch management is strictly for ASISTEN
+    const asistenStrictRoutes = ["/asisten/read-watch"];
 
-  // Role-based route protection
-  if (session) {
-    const userRole = (session.user as any)?.role || "MAHASISWA";
+    // If user is not authenticated and trying to access protected route
+    if (!session && !isPublicRoute) {
+      console.log("[middleware] Redirecting to signin - no session");
+      return NextResponse.redirect(new URL("/signin", request.url));
+    }
 
-    if (
-      adminRoutes.some((route) => path.startsWith(route)) &&
-      userRole !== "ADMIN"
-    ) {
+    // If user is authenticated and trying to access signin, redirect to dashboard
+    if (session && path === "/signin") {
+      console.log("[middleware] Redirecting to dashboard - user authenticated");
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    if (
-      asistenRoutes.some((route) => path.startsWith(route)) &&
-      userRole !== "ASISTEN" &&
-      userRole !== "ADMIN"
-    ) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+    // Role-based route protection
+    if (session) {
+      const userRole = (session.user as any)?.role || "MAHASISWA";
+
+      if (
+        adminRoutes.some((route) => path.startsWith(route)) &&
+        userRole !== "ADMIN"
+      ) {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+
+      if (
+        asistenRoutes.some((route) => path.startsWith(route)) &&
+        userRole !== "ASISTEN" &&
+        userRole !== "ADMIN"
+      ) {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+
+      if (
+        asistenStrictRoutes.some((route) => path.startsWith(route)) &&
+        userRole !== "ASISTEN"
+      ) {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
     }
 
-    if (
-      asistenStrictRoutes.some((route) => path.startsWith(route)) &&
-      userRole !== "ASISTEN"
-    ) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
+    return NextResponse.next();
+  } catch (error) {
+    console.error("[middleware] Error:", error);
+    return NextResponse.next();
   }
-
-  return NextResponse.next();
 }
 
 export const config = {
