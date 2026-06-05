@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
 import { getCurrentUserWithRole } from "@/lib/auth-utils";
 
@@ -39,19 +38,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "pdf");
-    await mkdir(uploadsDir, { recursive: true });
-
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const fileName = `${Date.now()}-${randomUUID()}-${safeName}`;
-    const filePath = path.join(uploadsDir, fileName);
+    const blobPath = `pdf/${fileName}`;
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    const blob = await put(blobPath, file, {
+      access: "private",
+    });
 
     return NextResponse.json({
-      url: `/uploads/pdf/${fileName}`,
+      url: blob.url,
       name: file.name,
       size: file.size,
     });
