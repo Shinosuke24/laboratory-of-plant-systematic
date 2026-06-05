@@ -42,7 +42,7 @@ model ReadWatch {
   title       String
   description String?  @db.Text
   category    String
-  content     String?  @db.LongText
+  content     String?  @db.Text
   fileUrl     String?
   imageUrl    String?
   createdAt   DateTime @default(now())

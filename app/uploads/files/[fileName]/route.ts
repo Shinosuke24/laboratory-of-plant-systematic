@@ -19,10 +19,10 @@ const CONTENT_TYPES: Record<string, string> = {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { fileName: string } },
+  { params }: { params: Promise<{ fileName: string }> },
 ) {
   try {
-    const fileName = params.fileName || "";
+    const { fileName } = await params;
 
     // Block path traversal and unsupported file names.
     if (!/^[a-zA-Z0-9._-]+$/.test(fileName)) {
