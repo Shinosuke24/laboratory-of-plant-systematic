@@ -41,9 +41,12 @@ export async function POST(request: NextRequest) {
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const blobPath = `pdf/${Date.now()}-${randomUUID()}-${safeName}`;
 
+    console.log("[upload/pdf] BLOB_TOKEN exists:", !!process.env.BLOB_READ_WRITE_TOKEN, "len:", process.env.BLOB_READ_WRITE_TOKEN?.length);
+
     const blob = await put(blobPath, file, {
       access: "public",
       addRandomSuffix: false,
+      token: process.env.BLOB_READ_WRITE_TOKEN,
     });
 
     return NextResponse.json({
