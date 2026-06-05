@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
-import { getCurrentUserWithRole } from "@/lib/auth-utils";
 
 export const runtime = "nodejs";
 
@@ -19,15 +18,13 @@ const ALLOWED_IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif"]);
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUserWithRole();
-    if (!user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    console.log("[v0] Image upload started");
+    
     const formData = await request.formData();
     const file = formData.get("file");
 
     if (!file || !(file instanceof File)) {
+      console.log("[v0] No file provided");
       return NextResponse.json(
         { error: "An image file is required" },
         { status: 400 },
@@ -39,6 +36,7 @@ export async function POST(request: NextRequest) {
     const hasValidExtension = ALLOWED_IMAGE_EXTENSIONS.has(extension);
 
     if (!hasValidType && !hasValidExtension) {
+      console.log("[v0] Invalid image format:", { type: file.type, extension });
       return NextResponse.json(
         { error: "Unsupported image format. Use JPG, PNG, WEBP, or GIF" },
         { status: 400 },
@@ -46,6 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (file.size > MAX_FILE_SIZE) {
+      console.log("[v0] File too large:", file.size);
       return NextResponse.json(
         { error: "Maximum image size is 4 MB" },
         { status: 400 },
@@ -56,9 +55,13 @@ export async function POST(request: NextRequest) {
     const fileName = `${Date.now()}-${randomUUID()}-${safeName}`;
     const blobPath = `images/${fileName}`;
 
+    console.log("[v0] Uploading to Vercel Blob:", blobPath);
+
     const blob = await put(blobPath, file, {
       access: "private",
     });
+
+    console.log("[v0] Upload success:", blob.url);
 
     return NextResponse.json({
       url: blob.url,
@@ -66,9 +69,9 @@ export async function POST(request: NextRequest) {
       size: file.size,
     });
   } catch (error) {
-    console.error("[API] Error uploading image:", error);
+    console.error("[v0] Error uploading image:", error);
     return NextResponse.json(
-      { error: "Failed to upload image" },
+      { error: "Failed to upload image: " + (error instanceof Error ? error.message : String(error)) },
       { status: 500 },
     );
   }
