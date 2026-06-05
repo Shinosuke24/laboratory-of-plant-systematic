@@ -19,17 +19,18 @@ const CONTENT_TYPES: Record<string, string> = {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { fileName: string } },
+  { params }: { params: Promise<{ fileName: string }> },
 ) {
   try {
-    const fileName = params.fileName || "";
+    const { fileName } = await params;
+    const finalFileName = fileName || "";
 
     // Block path traversal and unsupported file names.
-    if (!/^[a-zA-Z0-9._-]+$/.test(fileName)) {
+    if (!/^[a-zA-Z0-9._-]+$/.test(finalFileName)) {
       return new Response("Invalid file name", { status: 400 });
     }
 
-    const extension = fileName.split(".").pop()?.toLowerCase() || "";
+    const extension = finalFileName.split(".").pop()?.toLowerCase() || "";
     const contentType = CONTENT_TYPES[extension];
 
     if (!contentType) {
@@ -41,7 +42,7 @@ export async function GET(
       "public",
       "uploads",
       "files",
-      fileName,
+      finalFileName,
     );
 
     try {
@@ -60,7 +61,7 @@ export async function GET(
         "public",
         "uploads",
         "pdf",
-        fileName,
+        finalFileName,
       );
       const fallbackBuffer = await readFile(fallbackFilePath);
       return new Response(fallbackBuffer, {
