@@ -25,13 +25,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# runtime uploads (keep directories with .gitkeep)
-public/uploads/**
-!public/uploads/
-!public/uploads/files/
-!public/uploads/images/
-!public/uploads/pdf/
-!public/uploads/files/.gitkeep
-!public/uploads/images/.gitkeep
-!public/uploads/pdf/.gitkeep

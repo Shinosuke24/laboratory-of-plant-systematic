@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
@@ -40,9 +41,9 @@ model ReadWatch {
   createdById String?
   updatedById String?
   title       String
-  description String?  @db.Text
+  description String?
   category    String
-  content     String?  @db.LongText
+  content     String?
   fileUrl     String?
   imageUrl    String?
   createdAt   DateTime @default(now())
@@ -74,13 +75,13 @@ model Peminjaman {
   dosenPembimbing String?
   persetujuanPembimbing String? // TELAH_DISETUJUI, BELUM
   judulPenelitian String?
-  tujuanPenelitian String? @db.Text
-  fasilitasDigunakan String? @db.Text
+  tujuanPenelitian String?
+  fasilitasDigunakan String?
   waktuMulaiPenggunaan DateTime?
   waktuSelesaiPengembalian DateTime?
   dokumenPermohonanUrl String?
   status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, RETURNED
-  notes           String?  @db.Text
+  notes           String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -93,7 +94,7 @@ model Penelitian {
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title           String
-  description     String?  @db.Text
+  description     String?
   startDate       DateTime
   endDate         DateTime?
   email           String?
@@ -102,11 +103,11 @@ model Penelitian {
   namaInstitusi   String?
   noWa            String?
   namaDosenPembimbing String?
-  jadwalPelaksanaan String? @db.Text
+  jadwalPelaksanaan String?
   suratPermohonanUrl String?
   status          String   @default("PENDING") // PENDING, APPROVED, ONGOING, COMPLETED
   documentUrl     String?
-  notes           String?  @db.Text
+  notes           String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -120,7 +121,7 @@ model Identifikasi {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   plantName       String
   scientificName  String?
-  description     String?  @db.Text
+  description     String?
   imageUrl        String?
   email           String?
   nama            String?
@@ -128,7 +129,7 @@ model Identifikasi {
   namaInstitusi   String?
   noWa            String?
   namaDosenPembimbing String?
-  jadwalPelaksanaan String? @db.Text
+  jadwalPelaksanaan String?
   suratPermohonanUrl String?
   namaKode        String?
   familyKelompok  String?
@@ -146,14 +147,14 @@ model KerjaLembur {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date            DateTime
   hours           Int
-  description     String?  @db.Text
+  description     String?
   email           String?
   nama            String?
   nim             String?
   namaInstitusi   String?
   noWa            String?
   namaDosenPembimbing String?
-  jadwalPelaksanaanLembur String? @db.Text
+  jadwalPelaksanaanLembur String?
   suratPermohonanUrl String?
   status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
   createdAt       DateTime @default(now())

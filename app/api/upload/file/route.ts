@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
 import { getCurrentUserWithRole } from "@/lib/auth-utils";
 
@@ -52,9 +51,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const extension = path.extname(file.name).toLowerCase();
+    const extension = file.name.split(".").pop()?.toLowerCase() || "";
     const mimeAllowed = ALLOWED_FILE_TYPES.has(file.type);
-    const extensionAllowed = ALLOWED_EXTENSIONS.has(extension);
+    const extensionAllowed = ALLOWED_EXTENSIONS.has(`.${extension}`);
 
     if (!mimeAllowed && !extensionAllowed) {
       return NextResponse.json(
@@ -73,19 +72,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "files");
-    await mkdir(uploadsDir, { recursive: true });
-
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const fileName = `${Date.now()}-${randomUUID()}-${safeName}`;
-    const filePath = path.join(uploadsDir, fileName);
+    const blobPath = `files/${Date.now()}-${randomUUID()}-${safeName}`;
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    const blob = await put(blobPath, file, {
+      access: "public",
+      addRandomSuffix: false,
+    });
 
     return NextResponse.json({
-      url: `/uploads/files/${fileName}`,
+      url: blob.url,
       name: file.name,
       size: file.size,
     });
