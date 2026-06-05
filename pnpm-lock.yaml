@@ -14,9 +14,6 @@ importers:
       '@next-auth/prisma-adapter':
         specifier: ^1.0.7
         version: 1.0.7(@prisma/client@5.8.0(prisma@5.8.0))(next-auth@4.24.14(next@16.2.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(nodemailer@7.0.13)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))
-      '@prisma/client':
-        specifier: ^5.8.0
-        version: 5.8.0(prisma@5.8.0)
       '@radix-ui/react-accordion':
         specifier: 1.2.12
         version: 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -168,6 +165,9 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
     devDependencies:
+      '@prisma/client':
+        specifier: 5.8.0
+        version: 5.8.0(prisma@5.8.0)
       '@tailwindcss/postcss':
         specifier: ^4.2.0
         version: 4.2.0
@@ -187,7 +187,7 @@ importers:
         specifier: ^8.5
         version: 8.5.6
       prisma:
-        specifier: ^5.8.0
+        specifier: 5.8.0
         version: 5.8.0
       tailwindcss:
         specifier: ^4.2.0
