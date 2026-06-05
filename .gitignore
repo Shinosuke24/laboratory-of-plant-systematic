@@ -35,3 +35,4 @@ public/uploads/**
 !public/uploads/files/.gitkeep
 !public/uploads/images/.gitkeep
 !public/uploads/pdf/.gitkeep
+.env*.local
