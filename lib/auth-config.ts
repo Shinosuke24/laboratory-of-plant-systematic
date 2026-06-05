@@ -19,33 +19,46 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       // First login
       if (user) {
-        let dbUser = await prisma.user.findUnique({
-          where: { email: user.email! },
-        });
-
-        // Create user if it does not exist yet
-        if (!dbUser) {
-          dbUser = await prisma.user.create({
-            data: {
-              email: user.email!,
-              name: user.name || "No Name",
-            },
+        try {
+          let dbUser = await prisma.user.findUnique({
+            where: { email: user.email! },
           });
-        }
 
-        token.id = dbUser.id;
-        token.role = dbUser.role;
+          // Create user if it does not exist yet
+          if (!dbUser) {
+            dbUser = await prisma.user.create({
+              data: {
+                email: user.email!,
+                name: user.name || "No Name",
+              },
+            });
+          }
+
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+        } catch (error) {
+          // Fallback if database is unavailable
+          console.log("[v0] Database unavailable, using fallback auth");
+          token.id = user.email || "unknown";
+          token.role = "USER";
+        }
       }
 
-      // Refresh role on each request
-      if (token.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: token.email },
-        });
+      // Refresh role on each request (with fallback)
+      if (token.email && !token.databaseFailed) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email },
+          });
 
-        if (dbUser) {
-          token.role = dbUser.role;
-          token.id = dbUser.id;
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.id = dbUser.id;
+          }
+        } catch (error) {
+          // Mark that database failed to avoid repeated attempts
+          token.databaseFailed = true;
+          console.log("[v0] Database error on session refresh, keeping cached role");
         }
       }
 
@@ -54,8 +67,8 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.id = (token.id as string) || session.user.email || "unknown";
+        session.user.role = (token.role as string) || "USER";
       }
       return session;
     },
